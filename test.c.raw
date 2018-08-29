@@ -1,0 +1,126 @@
+#include <stdio.h>
+
+#define X_NUM 1
+#define X_MAX_TYPE_NUM 15
+#define Y_MAX_TYPE_NUM 16
+
+char *X_TABLE[X_NUM][X_MAX_TYPE_NUM] = {
+	{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O"},
+};
+
+char *Y_TABLE[Y_MAX_TYPE_NUM] = {"B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15", "B16"};
+
+typedef struct{
+	unsigned long count_array[X_NUM][X_MAX_TYPE_NUM][Y_MAX_TYPE_NUM];
+	unsigned long sum_count_array[X_NUM][X_MAX_TYPE_NUM];
+	float rate_array[X_NUM][X_MAX_TYPE_NUM][Y_MAX_TYPE_NUM];
+}data_info_t;
+
+data_info_t g_data_info;
+
+void main(void)
+{
+	FILE *fp = fopen("data.txt", "r");
+	if (!fp){
+		printf("open data.txt fail\n");
+		return;
+	}
+	
+	int x_num_index = 0;
+	int x_max_type_index = 0;
+	int y_num_index = 0;
+	//modify here ，10列表示这个table标签字符串的长度不能超过9， ‘\0’ 占用一个字节
+	char temp_data[X_NUM + 1][10]; //"输入条件1的类型字符串"
+								  //"输入条件2的类型字符串"
+								  //"输入条件3的类型字符串"
+								  // ...
+								  //"输出结果的类型字符串"
+	char str[50];
+	int  number[7];
+	int total = 0;
+	memset(&g_data_info, 0, sizeof(g_data_info));
+	while (1){
+		if(fgets( str, sizeof(str), fp ) == NULL){
+			break;
+		}
+		total++;
+		sscanf( str , "%*[^ ] %d %d %d %d %d %d %d", &number[0], &number[1], &number[2], &number[3], &number[4], &number[5], &number[6]);
+		//现在只观察蓝色
+		strcpy(temp_data[0], X_TABLE[0][total % X_MAX_TYPE_NUM]);
+		sprintf(temp_data[1], "B%d", number[6]);
+		x_num_index = 0;
+		x_max_type_index = 0;
+		y_num_index = 0;
+		for (x_num_index = 0; x_num_index < X_NUM; x_num_index++){
+			for (x_max_type_index = 0; x_max_type_index < X_MAX_TYPE_NUM; x_max_type_index++){
+				if (strcmp(X_TABLE[x_num_index][x_max_type_index], temp_data[x_num_index]) == 0){
+					g_data_info.sum_count_array[x_num_index][x_max_type_index]++;
+					for (y_num_index = 0; y_num_index < Y_MAX_TYPE_NUM; y_num_index++){
+						if (strcmp(Y_TABLE[y_num_index], temp_data[X_NUM]) == 0){
+							g_data_info.count_array[x_num_index][x_max_type_index][y_num_index]++;
+						}
+					}
+				}
+			} 
+		}
+	}
+	
+	fclose(fp);
+#if 1
+	//show count
+	for (x_num_index = 0; x_num_index < X_NUM; x_num_index++){
+			for (x_max_type_index = 0; x_max_type_index < X_MAX_TYPE_NUM; x_max_type_index++){
+					for (y_num_index = 0; y_num_index < Y_MAX_TYPE_NUM; y_num_index++){
+							printf(" x%d -> type%d == y%d has %lu count\n", x_num_index, x_max_type_index, y_num_index, g_data_info.count_array[x_num_index][x_max_type_index][y_num_index]);
+					}
+			} 
+	}
+	
+	//calculate
+	for (x_num_index = 0; x_num_index < X_NUM; x_num_index++){
+		for (x_max_type_index = 0; x_max_type_index < X_MAX_TYPE_NUM; x_max_type_index++){
+			for (y_num_index = 0; y_num_index < Y_MAX_TYPE_NUM; y_num_index++){
+				if (g_data_info.sum_count_array[x_num_index][x_max_type_index] == 0){
+					g_data_info.rate_array[x_num_index][x_max_type_index][y_num_index] = 0.0;
+				}else{
+					g_data_info.rate_array[x_num_index][x_max_type_index][y_num_index] = (float)((double)g_data_info.count_array[x_num_index][x_max_type_index][y_num_index] / g_data_info.sum_count_array[x_num_index][x_max_type_index]);
+				}
+			} 
+		}
+	}
+	
+	//show rate
+	for (x_num_index = 0; x_num_index < X_NUM; x_num_index++){
+			for (x_max_type_index = 0; x_max_type_index < X_MAX_TYPE_NUM; x_max_type_index++){
+					for (y_num_index = 0; y_num_index < Y_MAX_TYPE_NUM; y_num_index++){
+							printf(" x%d -> type%d == y%d rate:%f\n", x_num_index, x_max_type_index, y_num_index, g_data_info.rate_array[x_num_index][x_max_type_index][y_num_index] );
+					}
+			} 
+	}
+	
+	printf("total sample count: %d\n", total);
+#endif
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
